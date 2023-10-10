@@ -17,8 +17,10 @@ class Serial:
 
     async def connect(self):
         devices = await BleakScanner.discover()
+        print("Discovered devices:")
         for d in devices:
             print(d)
+        print(f"Connecting to {self.mac_address}...")
         async with BleakClient(self.mac_address) as client:
             await client.is_connected()
             print("Connected: {0}".format(await client.is_connected()))
