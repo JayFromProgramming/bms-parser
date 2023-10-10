@@ -2,16 +2,20 @@ import serial
 from py.protocol.parser import BmsPacket
 from py.protocol import mock_inputs
 
+import bluetooth
+
 END_BYTE = b'\x77'
 
 class Serial:
-    def __init__(self, path: str, verbose: bool = False,
-                 use_mock: bool = False, mock_fail_rate: float = 0.05):
-        if not use_mock:
-            self.pyserial = serial.Serial(path, timeout=1.0)
+    def __init__(self, mac_address: str, verbose: bool = False):
+        # Use bluetooth
+        bluetooth_socket = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
+        bluetooth_socket.connect((mac_address, 1))
+        bluetooth_socket.makefile('rwb')
+        self.pyserial = serial.Serial(bluetooth_socket, timeout=1.0)
         self.verbose = verbose
-        self.use_mock = use_mock
-        self.mock_fail_rate = mock_fail_rate
+        self.use_mock = False
+        self.mock_fail_rate = 0.0
 
     def _request(self, req: bytes):
         self.pyserial.write(req)
