@@ -37,8 +37,9 @@ class Serial:
     def _request(self, req: bytes):
         if self.client is None:
             return b''
-        asyncio.run(self.client.write_gatt_char(self.client.services[1].characteristics[0].uuid, req))
-        raw = asyncio.run(self.client.read_gatt_char(self.client.services[1].characteristics[0].uuid))
+        asyncio.run(self.client.write_gatt_char('00010203-0405-0607-0809-0a0b0c0d1912', req))
+        raw = asyncio.run(self.client.read_gatt_char('00010203-0405-0607-0809-0a0b0c0d1912'))
+        print(raw)
         return raw
 
     def request_info(self) -> bytes:
