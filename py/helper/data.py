@@ -20,11 +20,23 @@ class Serial:
         for d in devices:
             print(d)
         print(f"Connecting to {self.mac_address}...")
-        self.client = BleakClient(self.mac_address)
+        self.client = BleakClient(self.mac_address, disconnected_callback=self.on_disconnect)
         await self.client.connect()
         print("Connected!")
+        # Print services
+        for s in self.client.services:
+            print(s)
+            # Print characteristics
+            for c in s.characteristics:
+                print(f'  {c}')
+
+    def on_disconnect(self, client):
+        print("Disconnected!")
+        self.client = None
 
     def _request(self, req: bytes):
+        if self.client is None:
+            return b''
         asyncio.run(self.client.write_gatt_char(self.client.services[1].characteristics[0].uuid, req))
         raw = asyncio.run(self.client.read_gatt_char(self.client.services[1].characteristics[0].uuid))
         return raw
