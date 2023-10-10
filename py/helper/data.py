@@ -10,9 +10,9 @@ END_BYTE = b'\x77'
 
 class Serial:
 
-    def __init__(self, mac_address: str, verbose: bool = False):
+    def __init__(self, mac_address: str):
         self.mac_address = mac_address
-
+        self.client = None
         asyncio.run(self.connect())
 
     async def connect(self):
@@ -21,37 +21,19 @@ class Serial:
         for d in devices:
             print(d)
         print(f"Connecting to {self.mac_address}...")
-        async with BleakClient(self.mac_address) as client:
-            await client.is_connected()
-            print("Connected: {0}".format(await client.is_connected()))
-            services = await client.get_services()
-            print("Services:")
-            for service in services:
-                print(service)
-            characteristics = await client.get_characteristics()
-            print("Characteristics:")
-            for char in characteristics:
-                print(char)
+        self.client = BleakClient(self.mac_address)
+        await self.client.connect()
+        print("Connected!")
 
     def _request(self, req: bytes):
-        self.pyserial.write(req)
-        if self.verbose:
-            print(f'> Request: {req.hex()}')
-
-        data = self.pyserial.read_until(expected=END_BYTE) # waits for a full packet with global timeout (1.0 sec)
-        data += self.pyserial.read_all() # empty the buffer
-        if self.verbose:
-            print(f'< Response: {data.hex()}')
-        return data
+        asyncio.run(self.client.write_gatt_char(mock_inputs.UUID, req))
+        raw = asyncio.run(self.client.read_gatt_char(mock_inputs.UUID))
+        return raw
 
     def request_info(self) -> bytes:
-        if self.use_mock:
-            return mock_inputs.get_response('info', self.mock_fail_rate)
         return self._request(b'\xdd\xa5\x03\x00\xff\xfdw')
 
     def request_cells(self) -> bytes:
-        if self.use_mock:
-            return mock_inputs.get_response('cell', self.mock_fail_rate)
         return self._request(b'\xdd\xa5\x04\x00\xff\xfcw')
 
     def request_hw(self) -> bytes:
