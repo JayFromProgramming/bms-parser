@@ -24,11 +24,7 @@ class Serial:
         await self.client.connect()
         print("Connected!")
         # Print services
-        for s in self.client.services:
-            print(s)
-            # Print characteristics
-            for c in s.characteristics:
-                print(f'  {c}')
+        print("Services:" + str(self.client.services))
         # Print descriptors
         # for d in self.client.descriptors:
         #     print(d)
@@ -40,7 +36,7 @@ class Serial:
     def _request(self, req: bytes):
         if self.client is None:
             return b''
-        raw = asyncio.run(self.client.write_gatt_char(self.client.services[0].characteristics[0], req, response=True))
+        raw = asyncio.run(self.client.write_gatt_char(self.client.services.characteristics[0], req, response=True))
         print(raw)
         return raw
 
