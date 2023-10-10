@@ -24,10 +24,15 @@ class Serial:
         await self.client.connect()
         print("Connected!")
         # Print services
-        print("Services:" + str(self.client.services))
-        # Print descriptors
-        # for d in self.client.descriptors:
-        #     print(d)
+        services = await self.client.get_services()
+        for s in services:
+            print(s)
+            # Print characteristics
+            for c in s.characteristics:
+                print(f"--->  {c}")
+
+        self.target = services.get_characteristic('00010203-0405-0607-0809-0a0b0c0d1912')
+
 
     def on_disconnect(self, client):
         print("Disconnected!")
@@ -36,8 +41,7 @@ class Serial:
     def _request(self, req: bytes):
         if self.client is None:
             return b''
-        raw = asyncio.run(self.client.write_gatt_char(self.client.services.characteristics[0], req, response=True))
-        print(raw)
+
         return raw
 
     def request_info(self) -> bytes:
