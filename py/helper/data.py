@@ -29,6 +29,9 @@ class Serial:
             # Print characteristics
             for c in s.characteristics:
                 print(f'  {c}')
+        # Print descriptors
+        # for d in self.client.descriptors:
+        #     print(d)
 
     def on_disconnect(self, client):
         print("Disconnected!")
@@ -37,8 +40,7 @@ class Serial:
     def _request(self, req: bytes):
         if self.client is None:
             return b''
-        asyncio.run(self.client.write_gatt_char('00010203-0405-0607-0809-0a0b0c0d1912', req))
-        raw = asyncio.run(self.client.read_gatt_char('00010203-0405-0607-0809-0a0b0c0d1912'))
+        raw = asyncio.run(self.client.write_gatt_char(self.client.services[0].characteristics[0], req, response=True))
         print(raw)
         return raw
 
