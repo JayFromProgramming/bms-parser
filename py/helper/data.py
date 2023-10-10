@@ -38,14 +38,14 @@ class Serial:
         return self._request(b'\xdd\xa5\x05\x00\xff\xfbw')
 
 
-    def get_cells(self) -> list[float]:
+    def get_cells(self):
         raw = self.request_cells()
         pkt = BmsPacket.from_bytes(raw)
 
         cells = [c.volt for c in pkt.body.data.cells]
         return cells
 
-    def get_info(self) -> tuple[list[tuple[str, str, str]], list[bool], dict[str, bool]]:
+    def get_info(self):
         raw = self.request_info()
         pkt = BmsPacket.from_bytes(raw)
 

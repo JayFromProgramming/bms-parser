@@ -1,6 +1,6 @@
 import random, sys
 
-info_hex: list[str] = [
+info_hex = [
     'dd03001b1365000000f802580047276e0aaa000000002129030d020ba00b9cfadd77',
     'dd03001b1364000000f802580047276e0555000000002129030d020ba00b9cfb3877',
     'dd03001b1365000000f802580047276e0555000000002129030d020ba00b9cfb3777',
@@ -22,7 +22,7 @@ info_hex: list[str] = [
 ]
 
 
-cell_hex: list[str] = [
+cell_hex = [
     # 'dd0400160fa70fa50fa10f980f9e0fa00fb10fbb0fb10fa60fa7f81877',
     'dd04001a0ffa0ff80ff80ff80ff80ff60ff60ff50ff70ff20ffb0ffb0ff8f29177',
     'dd04001a0ffa0ff90ff80ff80ff80ff50ff60ff50ff70ff20ffb0ffb0ff8f29177',
@@ -92,7 +92,7 @@ cell_hex: list[str] = [
     'dd04001a0f180f170f1a0f180f190f0c0f180f130f150f130f160f180f13fe0977',
 ]
 
-fails: list[bytes] = [
+fails = [
     b'',
     b'\x00'
 ]
@@ -117,7 +117,7 @@ def get_response(category: str, failure_rate: float, seq: bool = False):
     return random.choice(raws)
 
 
-cell_seq: list[str] = [
+cell_seq = [
     'dd04001a0f1b0f190f1c0f1c0f1c0f0f0f1c0f170f170f170f1e0f1c0f17fdda77',
     'dd04001a0f1b0f190f1c0f1c0f1c0f0f0f1b0f170f170f170f1f0f1c0f17fdda77',
     'dd04001a0f1b0f190f1c0f1c0f1c0f0f0f1b0f170f170f170f1f0f1c0f17fdda77',
@@ -165,7 +165,7 @@ cell_seq: list[str] = [
 cell_iter = enumerate(cell_seq[15:26])
 # cell_iter = enumerate(cell_seq)
 
-info_seq: list[str] = [
+info_seq = [
     'dd03001b13a10000032203fc0029276e000000000000214f030d020b350b35fc4d77',
     'dd03001b13a00000032203fc0029276e000000000000214f030d020b350b35fc4e77',
     'dd03001b13a00000032203fc0029276e000000000000214f030d020b350b35fc4e77',

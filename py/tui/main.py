@@ -43,7 +43,7 @@ class Window:
         self.layout['info']['prot'].update(Info.setup_prot(prot))
         self.layout['info']['time'].update(Info.setup_timestamp())
 
-    def update_cells(self, data: list[float], balancing: list[bool]):
+    def update_cells(self, data, balancing):
         cell_panel = Panel(Cells.setup(data, balancing), title='Cell Voltages', box=box.SQUARE)
         self.layout['cells'].update(cell_panel)
 
@@ -55,7 +55,7 @@ class Cells:
     placeholder = '  '
 
     @staticmethod
-    def setup(data: list[float], balancing: list[bool]):
+    def setup(data, balancing):
         table = Table(show_lines=True, box=box.SIMPLE)
 
         table.add_column('n', style='bright_black')
@@ -98,7 +98,7 @@ class Cells:
 
 class Info:
     @staticmethod
-    def setup_table(info: list[tuple[str, str, str]]):
+    def setup_table(info):
         table = Table(title='Basic Info', box=box.MINIMAL, show_lines=True)
 
         table.add_column('Title')
@@ -125,7 +125,7 @@ class Info:
         return Panel(content, title='FET status', box=box.SQUARE)
 
     @staticmethod
-    def setup_prot(prot: dict[str, bool]):
+    def setup_prot(prot):
         content = Columns([f'{k}={v}' for k, v in prot.items()], expand=True)
         return Panel(content, title='Protection Alerts', box=box.SQUARE)
 
