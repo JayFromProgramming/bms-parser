@@ -1,6 +1,5 @@
 import serial
 from py.protocol.parser import BmsPacket
-from py.protocol import mock_inputs
 
 from bleak import BleakClient
 from bleak import BleakScanner
@@ -26,8 +25,8 @@ class Serial:
         print("Connected!")
 
     def _request(self, req: bytes):
-        asyncio.run(self.client.write_gatt_char(mock_inputs.UUID, req))
-        raw = asyncio.run(self.client.read_gatt_char(mock_inputs.UUID))
+        asyncio.run(self.client.write_gatt_char(self.client.services[1].characteristics[0].uuid, req))
+        raw = asyncio.run(self.client.read_gatt_char(self.client.services[1].characteristics[0].uuid))
         return raw
 
     def request_info(self) -> bytes:
