@@ -16,6 +16,9 @@ class Serial:
         asyncio.run(self.connect())
 
     async def connect(self):
+        devices = await BleakScanner.discover()
+        for d in devices:
+            print(d)
         async with BleakClient(self.mac_address) as client:
             await client.is_connected()
             print("Connected: {0}".format(await client.is_connected()))
