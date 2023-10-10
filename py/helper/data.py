@@ -10,6 +10,7 @@ class Serial:
     def __init__(self, mac_address: str, verbose: bool = False):
         # Use bluetooth
         bluetooth_socket = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
+        print(f'Connecting to {mac_address}...')
         bluetooth_socket.connect((mac_address, 1))
         bluetooth_socket.makefile('rwb')
         self.pyserial = serial.Serial(bluetooth_socket, timeout=1.0)
