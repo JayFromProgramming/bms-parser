@@ -2,22 +2,31 @@ import serial
 from py.protocol.parser import BmsPacket
 from py.protocol import mock_inputs
 
-import bluetooth
+from bleak import BleakClient
+from bleak import BleakScanner
+import asyncio
 
 END_BYTE = b'\x77'
 
 class Serial:
 
     def __init__(self, mac_address: str, verbose: bool = False):
-        # Use bluetooth
-        bluetooth_socket = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
-        print(f'Connecting to {mac_address}...')
-        bluetooth_socket.connect((mac_address, 1))
-        bluetooth_socket.makefile('rwb')
-        self.pyserial = serial.Serial(bluetooth_socket, timeout=1.0)
-        self.verbose = verbose
-        self.use_mock = False
-        self.mock_fail_rate = 0.0
+        self.mac_address = mac_address
+
+        asyncio.run(self.connect())
+
+    async def connect(self):
+        async with BleakClient(self.mac_address) as client:
+            await client.is_connected()
+            print("Connected: {0}".format(await client.is_connected()))
+            services = await client.get_services()
+            print("Services:")
+            for service in services:
+                print(service)
+            characteristics = await client.get_characteristics()
+            print("Characteristics:")
+            for char in characteristics:
+                print(char)
 
     def _request(self, req: bytes):
         self.pyserial.write(req)
