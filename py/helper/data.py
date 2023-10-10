@@ -11,7 +11,6 @@ class Serial:
     def __init__(self, mac_address: str, verbose: bool = False):
         # Use bluetooth
         bluetooth_socket = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
-        bluetooth_socket.settimeout(10.0)
         print(f'Connecting to {mac_address}...')
         bluetooth_socket.connect((mac_address, 1))
         bluetooth_socket.makefile('rwb')
