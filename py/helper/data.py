@@ -36,6 +36,7 @@ class BleakSerial:
 
     def _rx_callback(self, sender, data):
         # Continuously append the data to the buffer
+        logging.info(f"Received {len(data)} bytes from {sender}.")
         self._buffer.extend(data)
         self._buffer_has_data = True
 
