@@ -105,6 +105,11 @@ class Serial:
             for c in s.characteristics:
                 print(f"  {c}")
         # Get the service and characteristic UUIDs
+        service_uuid = next((s.uuid for s in svcs if s.uuid == '00010203-0405-0607-0809-0a0b0c0d1912'), None)
+        char_uuid = next((c.uuid for c in svcs[0].characteristics if c.uuid == '00010203-0405-0607-0809-0a0b0c0d2b12'), None)
+        if service_uuid is None or char_uuid is None:
+            raise Exception("Service or characteristic not found.")
+        self.client = BleakSerial(self.client, service_uuid, char_uuid)
 
     def _request(self, req: bytes):
         if self.client is None:
