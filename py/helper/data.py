@@ -155,6 +155,7 @@ class Serial:
     def _request(self, req: bytes):
         if self.client is None:
             return b''
+        logging.info(f"Requesting: {req}")
         return self.serial_conn.request_sync(req)
 
     def request_info(self) -> bytes:
