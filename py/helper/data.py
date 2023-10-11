@@ -65,6 +65,7 @@ class BleakSerial:
             await self.client.write_gatt_char(self.tx_uuid, data, response=False)
             logging.info(f"Sent {len(data)} bytes.")
             print(f"Sent {len(data)} bytes.")
+        logging.info("Writer stopped.")
 
     async def read_until(self, timeout=5) -> bytes:
         start_time = asyncio.get_running_loop().time()
