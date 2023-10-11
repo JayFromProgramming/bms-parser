@@ -61,8 +61,9 @@ class BleakSerial:
             await asyncio.sleep(0.3)
             # Check if there is data to send
             message = await self._write_buffer.get()
-            if message is None:
-                break
+            if len(message) == 0:
+                logging.warning("Writer received empty message.")
+                continue
             # Send the data
             data = message
             print(f"Sending {len(data)} bytes.")
@@ -87,8 +88,12 @@ class BleakSerial:
 
     async def write(self, data: bytes):
         # Add the data to the write buffer
-        logging.info(f"Adding {len(data)} bytes to the write buffer.")
-        await self._write_buffer.put(data)
+        if self._write_buffer.full():
+            logging.warning("Write buffer is full.")
+        else:
+            logging.info(f"Adding {len(data)} bytes to the write buffer.")
+            await self._write_buffer.put(data)
+
 
     async def close(self):
         self._is_closing = True
