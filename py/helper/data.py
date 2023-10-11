@@ -60,6 +60,15 @@ class BleakSerial:
             del self._buffer[:n]
             return data
 
+    async def read_until(self, end_byte: bytes) -> bytes:
+        async with self._buffer_lock:
+            while end_byte not in self._buffer:
+                await self._buffer_cv.wait()
+            idx = self._buffer.index(end_byte)
+            data = self._buffer[:idx+1]
+            del self._buffer[:idx+1]
+            return data
+
     async def write(self, data: bytes):
         async with self._write_buffer_lock:
             self._write_buffer.extend(data)
@@ -74,12 +83,29 @@ class BleakSerial:
         await self._reader_task
         await self._writer_task
 
+    # Provide a non-async interface for writing
+    def write_sync(self, data: bytes):
+        asyncio.run(self.write(data))
+
+    # Provide a non-async interface for reading
+    def read_sync(self, n: int) -> bytes:
+        return asyncio.run(self.read(n))
+
+    def read_until_sync(self, end_byte: bytes) -> bytes:
+        return asyncio.run(self.read_until(end_byte))
+
+    # Provide a non-async interface for requesting
+    def request_sync(self, req: bytes) -> bytes:
+        self.write_sync(req)
+        return self.read_until_sync(END_BYTE)
+
 
 class Serial:
 
     def __init__(self, mac_address: str):
         self.mac_address = mac_address
         self.client = None
+        self.serial_conn = None
         asyncio.run(self.connect())
 
     async def connect(self):
@@ -107,12 +133,12 @@ class Serial:
         # Get the service and characteristic UUIDs
         service_uuid = "00010203-0405-0607-0809-0a0b0c0d1912"
         char_uuid = "00010203-0405-0607-0809-0a0b0c0d2b12"
-        self.client = BleakSerial(self.client, service_uuid, char_uuid)
+        self.serial_conn = BleakSerial(self.client, service_uuid, char_uuid)
 
     def _request(self, req: bytes):
         if self.client is None:
             return b''
-        return b''
+        return self.serial_conn.request_sync(req)
 
     def request_info(self) -> bytes:
         return self._request(b'\xdd\xa5\x03\x00\xff\xfdw')
