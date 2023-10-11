@@ -7,6 +7,7 @@ from bleak import BleakScanner
 from loguru import logger as logging
 
 import asyncio
+import threading
 
 END_BYTE = b'\x77'
 
@@ -19,12 +20,8 @@ class BleakSerial:
         self.tx_uuid = tx_uuid
         if not self.client.is_connected:
             raise Exception("Client is not connected.")
-        self._buffer = bytearray()  # type: bytearray # Used to store the incoming data
-        self._buffer_lock = asyncio.Lock()  # type: asyncio.Lock # Used to lock the buffer
-        self._buffer_cv = asyncio.Condition()  # type: asyncio.Condition # Used to notify the reader
 
-        self._reader_task = None  # type: asyncio.Task # Used to store the reader task
-        self._reader_task_lock = asyncio.Lock()  # type: asyncio.Lock # Used to lock the reader task
+        self._buffer = bytearray()  # type: bytearray # Used to store the incoming data
 
         self._write_buffer = bytearray()  # type: bytearray # Used to store the outgoing data
         self._write_buffer_lock = asyncio.Lock()  # type: asyncio.Lock # Used to lock the write buffer
@@ -38,11 +35,10 @@ class BleakSerial:
         # self._reader_task = asyncio.create_task(self._reader())
         self._writer_task = asyncio.create_task(self._writer())
 
-    async def _rx_callback(self, sender, data):
-        async with self._buffer_lock:
-            self._buffer.extend(data)
-            self._buffer_has_data = True
-            self._buffer_cv.notify()
+    def _rx_callback(self, sender, data):
+        # Continuously append the data to the buffer
+        self._buffer.extend(data)
+        self._buffer_has_data = True
 
     async def _writer(self):
         while not self._is_closing:
@@ -59,14 +55,13 @@ class BleakSerial:
         start_time = asyncio.get_running_loop().time()
         while start_time + timeout > asyncio.get_running_loop().time():
             # Check if the buffer has data
-            async with self._buffer_lock:
-                if self._buffer_has_data:
-                    self._buffer_has_data = False
-                # Return the data if we have it
-                if len(self._buffer) > 0:
-                    data = self._buffer
-                    self._buffer = bytearray()
-                    return data
+            if self._buffer_has_data:
+                self._buffer_has_data = False
+            # Return the data if we have it
+            if len(self._buffer) > 0:
+                data = self._buffer
+                self._buffer = bytearray()
+                return data
         raise TimeoutError(f"Timeout while waiting for data. Received {len(self._buffer)} bytes.")
 
     async def write(self, data: bytes):
