@@ -50,6 +50,8 @@ class BleakSerial:
     #         self._buffer_has_data = True
 
     async def _writer(self):
+        print("Writer started.")
+        logging.info("Writer started.")
         while not self._is_closing:
             await asyncio.sleep(0.3)
             async with self._write_buffer_lock:
