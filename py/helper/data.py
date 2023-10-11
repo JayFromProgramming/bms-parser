@@ -80,6 +80,7 @@ class BleakSerial:
 
     async def write(self, data: bytes):
         # Add the data to the write buffer
+        logging.info(f"Adding {len(data)} bytes to the write buffer.")
         await self._write_buffer.put(data)
 
     async def close(self):
