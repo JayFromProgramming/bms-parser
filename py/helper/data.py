@@ -33,7 +33,7 @@ class BleakSerial:
 
     async def spool_tasks(self):
         self._writer_task = asyncio.create_task(self._writer())
-        # self._reader_task = asyncio.create_task(self._reader())
+        self._reader_task = asyncio.create_task(self._reader())
 
     def _rx_callback(self, sender, data):
         # Continuously append the data to the buffer
@@ -41,13 +41,16 @@ class BleakSerial:
         self._buffer.extend(data)
         self._buffer_has_data = True
 
-    # async def _reader(self):
-    #     while not self._is_closing:
-    #         # Read the data
-    #         data = await self.client.read_gatt_char(self.rx_uuid)
-    #         # Append the data to the buffer
-    #         self._buffer.extend(data)
-    #         self._buffer_has_data = True
+    async def _reader(self):
+        while not self._is_closing:
+            # Read the data
+            data = await self.client.read_gatt_char(self.rx_uuid)
+            if len(data) == 0:
+                continue
+            logging.info(f"Received {len(data)} bytes.")
+            # Append the data to the buffer
+            self._buffer.extend(data)
+            self._buffer_has_data = True
 
     async def _writer(self):
         print("Writer started.")
