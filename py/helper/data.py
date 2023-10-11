@@ -133,8 +133,8 @@ class Serial:
         service_uuid = "0000ff0-0000-1000-8000-00805f9b34fb"
         tx = "0000ff01-0000-1000-8000-00805f9b34fb"
         rx = "0000ff02-0000-1000-8000-00805f9b34fb"
-        paired = await self.client.pair(pin="0000")
-        print(f"Paired: {paired}")
+        # paired = await self.client.pair(pin="0000")
+        # print(f"Paired: {paired}")
         self.serial_conn = BleakSerial(self.client, rx.lower(), tx.lower())
         # await self.client.start_notify(rx.lower(), self.serial_conn._rx_callback)
 
