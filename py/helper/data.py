@@ -31,8 +31,9 @@ class BleakSerial:
         self._buffer_has_data = False
         self._is_closing = False  # type: bool # Used to indicate that the connection is closing
 
-        # self._reader_task = asyncio.create_task(self._reader())
+    async def spool_tasks(self):
         self._writer_task = asyncio.create_task(self._writer())
+        # self._reader_task = asyncio.create_task(self._reader())
 
     def _rx_callback(self, sender, data):
         # Continuously append the data to the buffer
@@ -154,6 +155,8 @@ class Serial:
         self.serial_conn = BleakSerial(self.client, rx.lower(), tx.lower())
         await self.client.start_notify(rx.lower(), self.serial_conn._rx_callback)
         logging.info("Started notify.")
+        await self.serial_conn.spool_tasks()
+        logging.info("Spooled tasks.")
 
     def _request(self, req: bytes):
         if self.client is None:
