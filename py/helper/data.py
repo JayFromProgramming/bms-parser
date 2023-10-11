@@ -11,6 +11,7 @@ import threading
 
 END_BYTE = b'\x77'
 
+
 class BleakSerial:
 
     def __init__(self, bleak_client: BleakClient, rx_uuid: str, tx_uuid: str):
@@ -40,19 +41,19 @@ class BleakSerial:
         self._buffer.extend(data)
         self._buffer_has_data = True
 
-    async def _reader(self):
-        while not self._is_closing:
-            # Read the data
-            data = await self.client.read_gatt_char(self.rx_uuid)
-            # Append the data to the buffer
-            self._buffer.extend(data)
-            self._buffer_has_data = True
+    # async def _reader(self):
+    #     while not self._is_closing:
+    #         # Read the data
+    #         data = await self.client.read_gatt_char(self.rx_uuid)
+    #         # Append the data to the buffer
+    #         self._buffer.extend(data)
+    #         self._buffer_has_data = True
 
     async def _writer(self):
         while not self._is_closing:
+            await asyncio.sleep(0.3)
             async with self._write_buffer_lock:
                 if len(self._write_buffer) == 0:
-                    await asyncio.sleep(0.1)
                     continue
                 data = self._write_buffer
                 self._write_buffer = bytearray()
@@ -137,7 +138,6 @@ class Serial:
         # print(f"Paired: {paired}")
         self.serial_conn = BleakSerial(self.client, rx.lower(), tx.lower())
         await self.client.start_notify(rx.lower(), self.serial_conn._rx_callback)
-
 
     def _request(self, req: bytes):
         if self.client is None:
