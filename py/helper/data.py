@@ -30,6 +30,7 @@ class BleakSerial:
         self._writer_task = None  # type: asyncio.Task # Used to store the writer task
         self._writer_task_lock = asyncio.Lock()  # type: asyncio.Lock # Used to lock the writer task
 
+        self._buffer_has_data = False
         self._is_closing = False  # type: bool # Used to indicate that the connection is closing
 
         self._reader_task = asyncio.create_task(self._reader())
@@ -42,7 +43,11 @@ class BleakSerial:
                 continue
             async with self._buffer_lock:
                 self._buffer.extend(data)
-                self._buffer_cv.notify()
+                # Notify the reader once we receive the end byte
+                if data[-1] == END_BYTE:
+                    self._buffer_has_data = True
+                    self._buffer_cv.notify()
+            await asyncio.sleep(0.1)
 
     async def _writer(self):
         while not self._is_closing:
@@ -54,24 +59,19 @@ class BleakSerial:
                 self._write_buffer = bytearray()
             await self.client.write_gatt_char(self.char_uuid, data)
 
-    async def read(self, n: int) -> bytes:
-        async with self._buffer_lock:
-            while len(self._buffer) < n:
-                await self._buffer_cv.wait()
-            data = self._buffer[:n]
-            del self._buffer[:n]
-            return data
-
-    async def read_until(self, end_byte: bytes, timeout=5) -> bytes:
+    async def read_until(self, timeout=5) -> bytes:
         start_time = asyncio.get_running_loop().time()
         while start_time + timeout > asyncio.get_running_loop().time():
+            # Check if the buffer has data
             async with self._buffer_lock:
-                if end_byte in self._buffer:
-                    data = self._buffer[:self._buffer.index(end_byte)+1]
-                    del self._buffer[:self._buffer.index(end_byte)+1]
+                if self._buffer_has_data:
+                    self._buffer_has_data = False
+                # Return the data if we have it
+                if len(self._buffer) > 0:
+                    data = self._buffer
+                    self._buffer = bytearray()
                     return data
-            await self._buffer_cv.wait()
-        raise TimeoutError()
+        raise TimeoutError("Timeout while waiting for data.")
 
     async def write(self, data: bytes):
         async with self._write_buffer_lock:
