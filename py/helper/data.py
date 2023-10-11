@@ -57,8 +57,10 @@ class BleakSerial:
                     continue
                 data = self._write_buffer
                 self._write_buffer = bytearray()
+            print(f"Sending {len(data)} bytes.")
             await self.client.write_gatt_char(self.tx_uuid, data)
             logging.info(f"Sent {len(data)} bytes.")
+            print(f"Sent {len(data)} bytes.")
 
     async def read_until(self, timeout=5) -> bytes:
         start_time = asyncio.get_running_loop().time()
