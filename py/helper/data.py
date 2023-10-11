@@ -93,6 +93,13 @@ class BleakSerial:
         await self._reader_task
         await self._writer_task
 
+    async def request(self, req: bytes) -> bytes:
+        await self.write(req)
+        # Wait for the write queue to be empty
+        while not self._write_buffer.empty():
+            await asyncio.sleep(0.1)
+        return await self.read_until()
+
     # Provide a non-async interface for writing
     def write_sync(self, data: bytes):
         asyncio.run(self.write(data))
@@ -102,8 +109,7 @@ class BleakSerial:
 
     # Provide a non-async interface for requesting
     def request_sync(self, req: bytes) -> bytes:
-        self.write_sync(req)
-        return self.read_until_sync()
+        return asyncio.run(self.request(req))
 
 
 class Serial:
