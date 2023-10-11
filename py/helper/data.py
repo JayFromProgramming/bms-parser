@@ -27,6 +27,7 @@ class BleakSerial:
         self._write_buffer = asyncio.Queue(maxsize=10)  # type: asyncio.Queue # Used to store the outgoing data
 
         self._writer_task = None  # type: asyncio.Task # Used to store the writer task
+        self._reader_task = None  # type: asyncio.Task # Used to store the reader task
 
         self._buffer_has_data = False
         self._is_closing = False  # type: bool # Used to indicate that the connection is closing
