@@ -91,17 +91,13 @@ class BleakSerial:
     def write_sync(self, data: bytes):
         asyncio.run(self.write(data))
 
-    # Provide a non-async interface for reading
-    def read_sync(self, n: int) -> bytes:
-        return asyncio.run(self.read(n))
-
-    def read_until_sync(self, end_byte: bytes) -> bytes:
-        return asyncio.run(self.read_until(end_byte))
+    def read_until_sync(self) -> bytes:
+        return asyncio.run(self.read_until())
 
     # Provide a non-async interface for requesting
     def request_sync(self, req: bytes) -> bytes:
         self.write_sync(req)
-        return self.read_until_sync(END_BYTE)
+        return self.read_until_sync()
 
 
 class Serial:
