@@ -12,11 +12,11 @@ END_BYTE = b'\x77'
 
 class BleakSerial:
 
-    def __init__(self, bleak_client: BleakClient, service_uuid: str, char_uuid: str):
+    def __init__(self, bleak_client: BleakClient, rx_uuid: str, tx_uuid: str):
         # It is assumed that the client is already connected
         self.client = bleak_client
-        self.service_uuid = service_uuid
-        self.char_uuid = char_uuid
+        self.rx_uuid = rx_uuid
+        self.tx_uuid = tx_uuid
         if not self.client.is_connected:
             raise Exception("Client is not connected.")
         self._buffer = bytearray()  # type: bytearray # Used to store the incoming data
@@ -40,7 +40,7 @@ class BleakSerial:
 
     async def _reader(self):
         while not self._is_closing:
-            data = await self.client.read_gatt_char(self.char_uuid)
+            data = await self.client.read_gatt_char(self.rx_uuid)
             if data is None:
                 continue
             async with self._buffer_lock:
@@ -59,7 +59,7 @@ class BleakSerial:
                     continue
                 data = self._write_buffer
                 self._write_buffer = bytearray()
-            await self.client.write_gatt_char(self.char_uuid, data)
+            await self.client.write_gatt_char(self.tx_uuid, data)
             logging.info(f"Sent {len(data)} bytes.")
 
     async def read_until(self, timeout=5) -> bytes:
@@ -134,9 +134,10 @@ class Serial:
             for c in s.characteristics:
                 print(f"  {c}")
         # Get the service and characteristic UUIDs
-        service_uuid = "00010203-0405-0607-0809-0a0b0c0d1912"
-        char_uuid = "00010203-0405-0607-0809-0a0b0c0d2b12"
-        self.serial_conn = BleakSerial(self.client, service_uuid, char_uuid)
+        service_uuid = "0000ff0-0000-1000-8000-00805f9b34fb"
+        rx = "0000ff01-0000-1000-8000-00805f9b34fb"
+        tx = "0000ff02-0000-1000-8000-00805f9b34fb"
+        self.serial_conn = BleakSerial(self.client, rx, tx)
 
     def _request(self, req: bytes):
         if self.client is None:
