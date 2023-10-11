@@ -121,6 +121,7 @@ class Serial:
         self.client = None
         self.serial_conn = None
         asyncio.run(self.connect())
+        self.request_info()
 
     async def connect(self):
         devices = await BleakScanner.discover()
@@ -153,7 +154,6 @@ class Serial:
         self.serial_conn = BleakSerial(self.client, rx.lower(), tx.lower())
         await self.client.start_notify(rx.lower(), self.serial_conn._rx_callback)
         logging.info("Started notify.")
-        self.request_info()
 
     def _request(self, req: bytes):
         if self.client is None:
