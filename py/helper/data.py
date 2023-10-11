@@ -3,6 +3,9 @@ from py.protocol.parser import BmsPacket
 
 from bleak import BleakClient
 from bleak import BleakScanner
+
+import bluetooth
+
 import asyncio
 
 END_BYTE = b'\x77'
@@ -12,6 +15,7 @@ class Serial:
     def __init__(self, mac_address: str):
         self.mac_address = mac_address
         self.client = None
+        self.socket = None
         asyncio.run(self.connect())
 
     async def connect(self):
@@ -19,29 +23,12 @@ class Serial:
         print("Discovered devices:")
         for d in devices:
             print(d)
-        print(f"Connecting to {self.mac_address}...")
-        self.client = BleakClient(self.mac_address, disconnected_callback=self.on_disconnect)
-        await self.client.connect()
-        print("Connected!")
-        # Print services
-        services = await self.client.get_services()
-        for s in services:
-            print(s)
-            # Print characteristics
-            for c in s.characteristics:
-                print(f"--->  {c}")
 
-        self.target = services.get_characteristic('00010203-0405-0607-0809-0a0b0c0d1912')
-
-
-    def on_disconnect(self, client):
-        print("Disconnected!")
-        self.client = None
 
     def _request(self, req: bytes):
         if self.client is None:
             return b''
-
+        return None
         return raw
 
     def request_info(self) -> bytes:
