@@ -35,21 +35,14 @@ class BleakSerial:
         self._buffer_has_data = False
         self._is_closing = False  # type: bool # Used to indicate that the connection is closing
 
-        self._reader_task = asyncio.create_task(self._reader())
+        # self._reader_task = asyncio.create_task(self._reader())
         self._writer_task = asyncio.create_task(self._writer())
 
-    async def _reader(self):
-        while not self._is_closing:
-            data = await self.client.read_gatt_char(self.rx_uuid)
-            if data is None:
-                continue
-            async with self._buffer_lock:
-                self._buffer.extend(data)
-                # Notify the reader once we receive the end byte
-                if data[-1] == END_BYTE:
-                    self._buffer_has_data = True
-                    # self._buffer_cv.notify()
-            await asyncio.sleep(0.1)
+    async def _rx_callback(self, sender, data):
+        async with self._buffer_lock:
+            self._buffer.extend(data)
+            self._buffer_has_data = True
+            self._buffer_cv.notify()
 
     async def _writer(self):
         while not self._is_closing:
@@ -138,6 +131,8 @@ class Serial:
         rx = "0000ff01-0000-1000-8000-00805f9b34fb"
         tx = "0000ff02-0000-1000-8000-00805f9b34fb"
         self.serial_conn = BleakSerial(self.client, rx, tx)
+        await self.client.start_notify(rx, self.serial_conn._rx_callback)
+
 
     def _request(self, req: bytes):
         if self.client is None:
