@@ -47,7 +47,8 @@ class BleakSerial:
         while not self._is_closing:
             async with self._write_buffer_lock:
                 if len(self._write_buffer) == 0:
-                    await self._write_buffer_lock.wait()
+                    await asyncio.sleep(0.1)
+                    continue
                 data = self._write_buffer
                 self._write_buffer = bytearray()
             await self.client.write_gatt_char(self.char_uuid, data)
