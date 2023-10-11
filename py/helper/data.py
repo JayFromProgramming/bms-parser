@@ -68,7 +68,7 @@ class BleakSerial:
             data = message
             print(f"Sending {len(data)} bytes.")
             logging.info(f"Sending {len(data)} bytes.")
-            await self.client.write_gatt_char(self.tx_uuid, data, response=False)
+
             logging.info(f"Sent {len(data)} bytes.")
             print(f"Sent {len(data)} bytes.")
         logging.info("Writer stopped.")
@@ -88,12 +88,14 @@ class BleakSerial:
 
     async def write(self, data: bytes):
         # Add the data to the write buffer
-        if self._write_buffer.full():
-            logging.warning("Write buffer is full.")
-        else:
-            logging.info(f"Adding {len(data)} bytes to the write buffer.")
-            await self._write_buffer.put(data)
-
+        # if self._write_buffer.full():
+        #     logging.warning("Write buffer is full.")
+        # else:
+        #     logging.info(f"Adding {len(data)} bytes to the write buffer.")
+        #     await self._write_buffer.put(data)
+        logging.info(f"Sending {len(data)} bytes.")
+        await self.client.write_gatt_char(self.tx_uuid, data, response=False)
+        logging.info(f"Sent {len(data)} bytes.")
 
     async def close(self):
         self._is_closing = True
