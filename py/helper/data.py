@@ -128,8 +128,8 @@ class Serial:
                 print(f"  {c}")
         # Get the service and characteristic UUIDs
         service_uuid = "0000ff0-0000-1000-8000-00805f9b34fb"
-        rx = "0000ff01-0000-1000-8000-00805f9b34fb"
-        tx = "0000ff02-0000-1000-8000-00805f9b34fb"
+        tx = "0000ff01-0000-1000-8000-00805f9b34fb"
+        rx = "0000ff02-0000-1000-8000-00805f9b34fb"
         self.serial_conn = BleakSerial(self.client, rx, tx)
         await self.client.start_notify(rx, self.serial_conn._rx_callback)
 
