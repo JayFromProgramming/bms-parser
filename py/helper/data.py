@@ -61,13 +61,13 @@ class BleakSerial:
             return data
 
     async def read_until(self, end_byte: bytes) -> bytes:
-        async with self._buffer_lock:
-            while end_byte not in self._buffer:
-                await self._buffer_cv.wait()
-            idx = self._buffer.index(end_byte)
-            data = self._buffer[:idx+1]
-            del self._buffer[:idx+1]
-            return data
+        while True:
+            async with self._buffer_lock:
+                if end_byte in self._buffer:
+                    data = self._buffer[:self._buffer.index(end_byte)+1]
+                    del self._buffer[:self._buffer.index(end_byte)+1]
+                    return data
+            await self._buffer_cv.wait()
 
     async def write(self, data: bytes):
         async with self._write_buffer_lock:
