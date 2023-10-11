@@ -4,8 +4,6 @@ from py.protocol.parser import BmsPacket
 from bleak import BleakClient
 from bleak import BleakScanner
 
-import bluetooth
-
 import asyncio
 
 END_BYTE = b'\x77'
@@ -15,7 +13,7 @@ class Serial:
     def __init__(self, mac_address: str):
         self.mac_address = mac_address
         self.client = None
-        self.socket = None
+        self.serial_conn = None
         asyncio.run(self.connect())
 
     async def connect(self):
@@ -29,13 +27,11 @@ class Serial:
         target = next((d for d in devices if d.address == self.mac_address), None)
         if target is None:
             raise Exception(f"Device {self.mac_address} not found.")
-        self.socket = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
-        try:
-            self.socket.connect((target.address, 1))
-        except bluetooth.btcommon.BluetoothError as e:
-            print(e)
-            self.socket = None
-            return
+        self.client = BleakClient(target)
+        await self.client.connect()
+        print("Connected to target device.")
+        # Establish serial connection
+        self.serial_conn = serial.Serial(self.client, 115200, timeout=1)
 
     def _request(self, req: bytes):
         if self.client is None:
