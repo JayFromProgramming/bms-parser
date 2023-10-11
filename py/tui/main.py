@@ -1,4 +1,6 @@
 import time, datetime, random, sys
+import traceback
+
 from rich import print
 from rich import box
 from rich.layout import Layout
@@ -155,8 +157,8 @@ def run():
                 logging.exception(ose)
                 sys.exit(1)
             except Exception as e:
-                logging.error('Error while reading data')
                 logging.exception(e)
+                logging.error(f"Unexpected error: {e}\n{traceback.format_exc()}")
                 sys.exit(-1)
 
             window.update_info(table_info, fet_info, prot_info)
