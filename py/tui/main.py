@@ -157,7 +157,7 @@ def run():
             except Exception as e:
                 logging.error('Error while reading data')
                 logging.exception(e)
-                continue
+                sys.exit(-1)
 
             window.update_info(table_info, fet_info, prot_info)
             window.update_cells(cell_data, balance_info)
