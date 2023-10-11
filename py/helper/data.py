@@ -71,7 +71,7 @@ class BleakSerial:
                     data = self._buffer
                     self._buffer = bytearray()
                     return data
-        raise TimeoutError("Timeout while waiting for data.")
+        raise TimeoutError(f"Timeout while waiting for data. Received {len(self._buffer)} bytes.")
 
     async def write(self, data: bytes):
         async with self._write_buffer_lock:
