@@ -94,7 +94,7 @@ class BleakSerial:
         #     logging.info(f"Adding {len(data)} bytes to the write buffer.")
         #     await self._write_buffer.put(data)
         logging.info(f"Sending {len(data)} bytes.")
-        await self.client.write_gatt_char(self.tx_uuid, data, response=False)
+        await self.client.write_gatt_char(self.tx_uuid, data, response=True)
         logging.info(f"Sent {len(data)} bytes.")
 
     async def close(self):
