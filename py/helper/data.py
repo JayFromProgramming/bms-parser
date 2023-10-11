@@ -43,6 +43,7 @@ class BleakSerial:
         self._buffer_has_data = True
 
     async def _reader(self):
+        logging.info("Reader started.")
         while not self._is_closing:
             # Read the data
             data = await self.client.read_gatt_char(self.rx_uuid)
