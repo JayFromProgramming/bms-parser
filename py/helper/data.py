@@ -60,14 +60,16 @@ class BleakSerial:
             del self._buffer[:n]
             return data
 
-    async def read_until(self, end_byte: bytes) -> bytes:
-        while True:
+    async def read_until(self, end_byte: bytes, timeout=5) -> bytes:
+        start_time = asyncio.get_running_loop().time()
+        while start_time + timeout > asyncio.get_running_loop().time():
             async with self._buffer_lock:
                 if end_byte in self._buffer:
                     data = self._buffer[:self._buffer.index(end_byte)+1]
                     del self._buffer[:self._buffer.index(end_byte)+1]
                     return data
             await self._buffer_cv.wait()
+        raise TimeoutError()
 
     async def write(self, data: bytes):
         async with self._write_buffer_lock:
