@@ -94,6 +94,7 @@ class BleakSerial:
         await self._writer_task
 
     async def request(self, req: bytes) -> bytes:
+        logging.info(f"Queueing request: {req}")
         await self.write(req)
         # Wait for the write queue to be empty
         while not self._write_buffer.empty():
