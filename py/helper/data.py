@@ -4,6 +4,8 @@ from py.protocol.parser import BmsPacket
 from bleak import BleakClient
 from bleak import BleakScanner
 
+from loguru import logger as logging
+
 import asyncio
 
 END_BYTE = b'\x77'
@@ -58,6 +60,7 @@ class BleakSerial:
                 data = self._write_buffer
                 self._write_buffer = bytearray()
             await self.client.write_gatt_char(self.char_uuid, data)
+            logging.info(f"Sent {len(data)} bytes.")
 
     async def read_until(self, timeout=5) -> bytes:
         start_time = asyncio.get_running_loop().time()
