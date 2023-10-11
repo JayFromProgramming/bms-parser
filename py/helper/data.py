@@ -23,13 +23,24 @@ class Serial:
         print("Discovered devices:")
         for d in devices:
             print(d)
-
+        if self.mac_address is None:
+            return
+        # Check if the target device is in the list of discovered devices
+        target = next((d for d in devices if d.address == self.mac_address), None)
+        if target is None:
+            raise Exception(f"Device {self.mac_address} not found.")
+        self.socket = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
+        try:
+            self.socket.connect((target.address, 1))
+        except bluetooth.btcommon.BluetoothError as e:
+            print(e)
+            self.socket = None
+            return
 
     def _request(self, req: bytes):
         if self.client is None:
             return b''
-        return None
-        return raw
+        return b''
 
     def request_info(self) -> bytes:
         return self._request(b'\xdd\xa5\x03\x00\xff\xfdw')
