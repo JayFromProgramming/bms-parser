@@ -151,7 +151,9 @@ class Serial:
         # paired = await self.client.pair(legacy=True)
         # print(f"Paired: {paired}")
         self.serial_conn = BleakSerial(self.client, rx.lower(), tx.lower())
-        # await self.client.start_notify(rx.lower(), self.serial_conn._rx_callback)
+        await self.client.start_notify(rx.lower(), self.serial_conn._rx_callback)
+        logging.info("Started notify.")
+        self.request_info()
 
     def _request(self, req: bytes):
         if self.client is None:
