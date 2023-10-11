@@ -8,12 +8,78 @@ import asyncio
 
 END_BYTE = b'\x77'
 
+class BleakSerial:
+
+    def __init__(self, bleak_client: BleakClient, service_uuid: str, char_uuid: str):
+        # It is assumed that the client is already connected
+        self.client = bleak_client
+        self.service_uuid = service_uuid
+        self.char_uuid = char_uuid
+        if not self.client.is_connected:
+            raise Exception("Client is not connected.")
+        self._buffer = bytearray()  # type: bytearray # Used to store the incoming data
+        self._buffer_lock = asyncio.Lock()  # type: asyncio.Lock # Used to lock the buffer
+        self._buffer_cv = asyncio.Condition()  # type: asyncio.Condition # Used to notify the reader
+
+        self._reader_task = None  # type: asyncio.Task # Used to store the reader task
+        self._reader_task_lock = asyncio.Lock()  # type: asyncio.Lock # Used to lock the reader task
+
+        self._write_buffer = bytearray()  # type: bytearray # Used to store the outgoing data
+        self._write_buffer_lock = asyncio.Lock()  # type: asyncio.Lock # Used to lock the write buffer
+
+        self._writer_task = None  # type: asyncio.Task # Used to store the writer task
+        self._writer_task_lock = asyncio.Lock()  # type: asyncio.Lock # Used to lock the writer task
+
+        self._is_closing = False  # type: bool # Used to indicate that the connection is closing
+
+        self._reader_task = asyncio.create_task(self._reader())
+
+    async def _reader(self):
+        while not self._is_closing:
+            data = await self.client.read_gatt_char(self.char_uuid)
+            if data is None:
+                continue
+            async with self._buffer_lock:
+                self._buffer.extend(data)
+                self._buffer_cv.notify()
+
+    async def _writer(self):
+        while not self._is_closing:
+            async with self._write_buffer_lock:
+                if len(self._write_buffer) == 0:
+                    await self._write_buffer_lock.wait()
+                data = self._write_buffer
+                self._write_buffer = bytearray()
+            await self.client.write_gatt_char(self.char_uuid, data)
+
+    async def read(self, n: int) -> bytes:
+        async with self._buffer_lock:
+            while len(self._buffer) < n:
+                await self._buffer_cv.wait()
+            data = self._buffer[:n]
+            del self._buffer[:n]
+            return data
+
+    async def write(self, data: bytes):
+        async with self._write_buffer_lock:
+            self._write_buffer.extend(data)
+
+    async def close(self):
+        self._is_closing = True
+        async with self._buffer_lock:
+            self._buffer_cv.notify()
+        async with self._write_buffer_lock:
+            pass
+        await self.client.disconnect()
+        await self._reader_task
+        await self._writer_task
+
+
 class Serial:
 
     def __init__(self, mac_address: str):
         self.mac_address = mac_address
         self.client = None
-        self.serial_conn = None
         asyncio.run(self.connect())
 
     async def connect(self):
@@ -30,8 +96,15 @@ class Serial:
         self.client = BleakClient(target)
         await self.client.connect()
         print("Connected to target device.")
-        # Establish serial connection
-        self.serial_conn = serial.Serial(self.client, 115200, timeout=1)
+        # Print all services
+        svcs = await self.client.get_services()
+        print("Services:")
+        for s in svcs:
+            print(s)
+            # Print all characteristics
+            for c in s.characteristics:
+                print(f"  {c}")
+        # Get the service and characteristic UUIDs
 
     def _request(self, req: bytes):
         if self.client is None:
@@ -47,7 +120,6 @@ class Serial:
     def request_hw(self) -> bytes:
         return self._request(b'\xdd\xa5\x05\x00\xff\xfbw')
 
-
     def get_cells(self):
         raw = self.request_cells()
         pkt = BmsPacket.from_bytes(raw)
@@ -59,24 +131,24 @@ class Serial:
         raw = self.request_info()
         pkt = BmsPacket.from_bytes(raw)
 
-        i: BmsPacket.BasicInfo = pkt.body.data 
+        i: BmsPacket.BasicInfo = pkt.body.data
         table = [
-            ('Pack Voltage', f'{i.pack_voltage.volt:.2f}', 'V'),
-            ('Cell', f'{i.cell_count}', 'count'),
-            ('Pack Current', f'{i.pack_current.amp:.2f}', 'A'),
-            ('Typ Cap', f'{i.typ_cap.amp_hour:.3f}', 'Ah'),
-            ('Remain Cap', f'{i.remain_cap.amp_hour:.3f}', 'Ah'),
-            ('Remain Percent', f'{i.remain_cap_percent}', '%'),
-            ('Cycle', f'{i.cycles:.0f}', 'count'),
-            # ('Balance', f'{i.balance_status.is_balancing}', 'bit'),
-            # ('FET', f'CHG={i.fet_status.is_charge_enabled} DIS={i.fet_status.is_discharge_enabled}', 'bit'),
-        ] + [
-            ('Temp', f'{t.celsius:.2f}', '°C') 
-            for t in i.temps
-        ]
+                    ('Pack Voltage', f'{i.pack_voltage.volt:.2f}', 'V'),
+                    ('Cell', f'{i.cell_count}', 'count'),
+                    ('Pack Current', f'{i.pack_current.amp:.2f}', 'A'),
+                    ('Typ Cap', f'{i.typ_cap.amp_hour:.3f}', 'Ah'),
+                    ('Remain Cap', f'{i.remain_cap.amp_hour:.3f}', 'Ah'),
+                    ('Remain Percent', f'{i.remain_cap_percent}', '%'),
+                    ('Cycle', f'{i.cycles:.0f}', 'count'),
+                    # ('Balance', f'{i.balance_status.is_balancing}', 'bit'),
+                    # ('FET', f'CHG={i.fet_status.is_charge_enabled} DIS={i.fet_status.is_discharge_enabled}', 'bit'),
+                ] + [
+                    ('Temp', f'{t.celsius:.2f}', '°C')
+                    for t in i.temps
+                ]
         balance = i.balance_status.is_balancing
         fet = {
-            'charge enabled': i.fet_status.is_charge_enabled, 
+            'charge enabled': i.fet_status.is_charge_enabled,
             'discharge enabled': i.fet_status.is_discharge_enabled,
         }
         prot_all = vars(i.prot_status)
