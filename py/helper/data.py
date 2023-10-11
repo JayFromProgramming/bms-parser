@@ -33,6 +33,7 @@ class BleakSerial:
         self._is_closing = False  # type: bool # Used to indicate that the connection is closing
 
         self._reader_task = asyncio.create_task(self._reader())
+        self._writer_task = asyncio.create_task(self._writer())
 
     async def _reader(self):
         while not self._is_closing:
