@@ -40,6 +40,14 @@ class BleakSerial:
         self._buffer.extend(data)
         self._buffer_has_data = True
 
+    async def _reader(self):
+        while not self._is_closing:
+            # Read the data
+            data = await self.client.read_gatt_char(self.rx_uuid)
+            # Append the data to the buffer
+            self._buffer.extend(data)
+            self._buffer_has_data = True
+
     async def _writer(self):
         while not self._is_closing:
             async with self._write_buffer_lock:
@@ -128,7 +136,7 @@ class Serial:
         paired = await self.client.pair(pin="0000")
         print(f"Paired: {paired}")
         self.serial_conn = BleakSerial(self.client, rx.lower(), tx.lower())
-        await self.client.start_notify(rx.lower(), self.serial_conn._rx_callback)
+        # await self.client.start_notify(rx.lower(), self.serial_conn._rx_callback)
 
 
     def _request(self, req: bytes):
