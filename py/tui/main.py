@@ -11,6 +11,8 @@ from rich.live import Live
 
 from py.helper.data import Serial
 
+from loguru import logger as logging
+
 REFRESH_INTERVAL = 0.5
 
 MIN_VOLT = 3.5
@@ -149,10 +151,12 @@ def run():
                 table_info, balance_info, fet_info, prot_info = serial.get_info()
                 cell_data = serial.get_cells()
             except OSError as ose:
-                print(ose)
+                logging.error('Error while reading data')
+                logging.exception(ose)
                 sys.exit(1)
             except Exception as e:
-                print(e)
+                logging.error('Error while reading data')
+                logging.exception(e)
                 continue
 
             window.update_info(table_info, fet_info, prot_info)
