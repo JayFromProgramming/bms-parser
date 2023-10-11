@@ -46,7 +46,7 @@ class BleakSerial:
                 # Notify the reader once we receive the end byte
                 if data[-1] == END_BYTE:
                     self._buffer_has_data = True
-                    self._buffer_cv.notify()
+                    # self._buffer_cv.notify()
             await asyncio.sleep(0.1)
 
     async def _writer(self):
