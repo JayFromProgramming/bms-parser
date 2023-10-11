@@ -24,11 +24,9 @@ class BleakSerial:
 
         self._buffer = bytearray()  # type: bytearray # Used to store the incoming data
 
-        self._write_buffer = bytearray()  # type: bytearray # Used to store the outgoing data
-        self._write_buffer_lock = asyncio.Lock()  # type: asyncio.Lock # Used to lock the write buffer
+        self._write_buffer = asyncio.Queue(maxsize=10)  # type: asyncio.Queue # Used to store the outgoing data
 
         self._writer_task = None  # type: asyncio.Task # Used to store the writer task
-        self._writer_task_lock = asyncio.Lock()  # type: asyncio.Lock # Used to lock the writer task
 
         self._buffer_has_data = False
         self._is_closing = False  # type: bool # Used to indicate that the connection is closing
@@ -54,11 +52,12 @@ class BleakSerial:
         logging.info("Writer started.")
         while not self._is_closing:
             await asyncio.sleep(0.3)
-            if len(self._write_buffer) == 0:
-                # logging.info("No data to send.")
-                continue
-            data = self._write_buffer
-            self._write_buffer = bytearray()
+            # Check if there is data to send
+            message = await self._write_buffer.get()
+            if message is None:
+                break
+            # Send the data
+            data = message
             print(f"Sending {len(data)} bytes.")
             logging.info(f"Sending {len(data)} bytes.")
             await self.client.write_gatt_char(self.tx_uuid, data, response=False)
@@ -80,8 +79,8 @@ class BleakSerial:
         raise TimeoutError(f"Timeout while waiting for data. Received {len(self._buffer)} bytes.")
 
     async def write(self, data: bytes):
-        async with self._write_buffer_lock:
-            self._write_buffer.extend(data)
+        # Add the data to the write buffer
+        await self._write_buffer.put(data)
 
     async def close(self):
         self._is_closing = True
