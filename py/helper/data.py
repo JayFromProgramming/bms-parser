@@ -81,6 +81,9 @@ class BleakSerial:
             logging.exception(e)
             logging.error(f"Unexpected error: {e}\n{traceback.format_exc()}")
             raise e
+        finally:
+            logging.warning("Writer exiting.")
+            print("Writer exiting.")
 
     async def read_until(self, timeout=5) -> bytes:
         start_time = asyncio.get_running_loop().time()
