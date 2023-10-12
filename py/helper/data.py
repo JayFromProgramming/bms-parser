@@ -116,15 +116,21 @@ class BleakSerial:
         return await self.read_until()
 
     # Provide a non-async interface for writing
-    def write_sync(self, data: bytes):
-        asyncio.run(self.write(data))
-
-    def read_until_sync(self) -> bytes:
-        return asyncio.run(self.read_until())
+    def write_nowait(self, data: bytes):
+        # Add the data to the write buffer
+        if self._write_buffer.full():
+            logging.warning("Write buffer is full.")
+        else:
+            logging.info(f"Adding {len(data)} bytes to the write buffer.")
+            self._write_buffer.put_nowait(data)
 
     # Provide a non-async interface for requesting
     def request_sync(self, req: bytes) -> bytes:
-        return asyncio.run(self.request(req))
+        self.write_nowait(req)
+        # Check if the write task is still running
+        if self._writer_task.done():
+            raise Exception("Writer task is not running.")
+        return b''
 
 
 class Serial:
