@@ -152,7 +152,7 @@ class Serial:
         self.request_info()
 
     async def connect(self):
-        devices = await BleakScanner.discover()
+        devices = await BleakScanner.discover(timeout=5)
         print("Discovered devices:")
         for d in devices:
             print(d)
