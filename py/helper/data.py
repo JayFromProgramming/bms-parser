@@ -135,12 +135,16 @@ class BleakSerial:
         return asyncio.run_coroutine_threadsafe(self.read_until(), asyncio.get_event_loop()).result()
 
     # Provide a non-async interface for requesting
-    def request_sync(self, req: bytes) -> bytes:
-        self.write_nowait(req)
+    async def request_sync(self, req: bytes) -> bytes:
+        await self.write(req)
         # Check if the write task is still running
         if self._writer_task.done():
             raise Exception("Writer task is not running.")
-        return self.read()
+        # Wait for the write queue to be empty
+        while not self._write_buffer.empty():
+            await asyncio.sleep(0.1)
+        return await self.read_until()
+
 
 class Serial:
 
@@ -148,12 +152,12 @@ class Serial:
         self.mac_address = mac_address
         self.client = None
         self.serial_conn = None
-        event_loop = asyncio.get_event_loop()
-        event_loop.run_until_complete(self.connect())
+        self.event_loop = asyncio.get_event_loop()
+        self.event_loop.run_until_complete(self.connect())
         if self.client is None:
             return
-        self.serial_conn._writer_task = event_loop.create_task(self.serial_conn._writer())
-        self.serial_conn._reader_task = event_loop.create_task(self.serial_conn._reader())
+        self.serial_conn._writer_task = self.event_loop.create_task(self.serial_conn._writer())
+        self.serial_conn._reader_task = self.event_loop.create_task(self.serial_conn._reader())
         self.request_info()
 
     async def connect(self):
@@ -198,11 +202,15 @@ class Serial:
         await self.client.start_notify(rx.lower(), self.serial_conn._rx_callback)
         logging.info("Started notify.")
 
-    def _request(self, req: bytes):
+    async def async_request(self, req: bytes):
         if self.client is None:
             return b''
         logging.info(f"Requesting: {req}")
-        return self.serial_conn.request_sync(req)
+        return await self.serial_conn.request(req)
+
+    def _request(self, req: bytes):
+        # Entry point for async request
+        return asyncio.run_coroutine_threadsafe(self.async_request(req), self.event_loop).result()
 
     def request_info(self) -> bytes:
         return self._request(b'\xdd\xa5\x03\x00\xff\xfdw')
