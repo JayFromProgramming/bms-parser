@@ -146,8 +146,9 @@ class Serial:
         self.mac_address = mac_address
         self.client = None
         self.serial_conn = None
-        asyncio.run(self.connect())
-        self.serial_conn._writer_task = asyncio.create_task(self.serial_conn._writer())
+        event_loop = asyncio.get_event_loop()
+        event_loop.run_until_complete(self.connect())
+        self.serial_conn._writer_task = event_loop.create_task(self.serial_conn._writer())
         self.request_info()
 
     async def connect(self):
