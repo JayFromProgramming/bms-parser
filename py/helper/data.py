@@ -109,16 +109,6 @@ class BleakSerial:
         await self.client.write_gatt_char(self.tx_uuid, data, response=True)
         logging.info(f"Sent {len(data)} bytes.")
 
-    async def close(self):
-        self._is_closing = True
-        async with self._buffer_lock:
-            self._buffer_cv.notify()
-        async with self._write_buffer_lock:
-            pass
-        await self.client.disconnect()
-        await self._reader_task
-        await self._writer_task
-
     async def request(self, req: bytes) -> bytes:
         logging.info(f"Queueing request: {req}")
         await self.write(req)
