@@ -148,6 +148,8 @@ class Serial:
         self.serial_conn = None
         event_loop = asyncio.get_event_loop()
         event_loop.run_until_complete(self.connect())
+        if self.client is None:
+            return
         self.serial_conn._writer_task = event_loop.create_task(self.serial_conn._writer())
         self.request_info()
 
@@ -164,12 +166,17 @@ class Serial:
         if target is None:
             raise Exception(f"Device {self.mac_address} not found.")
         self.client = BleakClient(target)
-        try:
-            await self.client.connect()
-        except BleakDBusError as e:
-            logging.error(f"Error while connecting to device: {e}")
-            return
-        print("Connected to target device.")
+        attempts_left = 5
+        while not self.client.is_connected and attempts_left > 0:
+            try:
+                await self.client.connect()
+            except BleakDBusError as e:
+                logging.warning(f"Failed to connect because of {e}. Retrying {attempts_left} more times.")
+                attempts_left -= 1
+                await asyncio.sleep(1)
+        if not self.client.is_connected:
+            raise Exception(f"Failed to connect to device {self.mac_address}.")
+        logging.info(f"Connected to {self.mac_address}.")
         # Print all services
         svcs = await self.client.get_services()
         print("Services:")
