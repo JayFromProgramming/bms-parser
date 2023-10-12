@@ -163,7 +163,7 @@ class Serial:
         logging.warning(f"Unable to find device {self.mac_address}, attempting connection anyway.")
         # if target is None:
         #     raise Exception(f"Device {self.mac_address} not found.")
-        self.client = BleakClient(target)
+        self.client = BleakClient(self.mac_address)
         try:
             await self.client.connect()
         except BleakDBusError as e:
