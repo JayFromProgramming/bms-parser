@@ -1,6 +1,8 @@
 import traceback
 
 import serial
+from bleak.exc import BleakDBusError
+
 from py.protocol.parser import BmsPacket
 
 from bleak import BleakClient
@@ -163,7 +165,11 @@ class Serial:
         if target is None:
             raise Exception(f"Device {self.mac_address} not found.")
         self.client = BleakClient(target)
-        await self.client.connect()
+        try:
+            await self.client.connect()
+        except BleakDBusError as e:
+            logging.error(f"Error while connecting to device: {e}")
+            raise e
         print("Connected to target device.")
         # Print all services
         svcs = await self.client.get_services()
