@@ -46,15 +46,24 @@ class BleakSerial:
 
     async def _reader(self):
         logging.info("Reader started.")
-        while not self._is_closing:
-            # Read the data
-            data = await self.client.read_gatt_char(self.rx_uuid)
-            if len(data) == 0:
-                continue
-            logging.info(f"Received {len(data)} bytes.")
-            # Append the data to the buffer
-            self._buffer.extend(data)
-            self._buffer_has_data = True
+        try:
+            while not self._is_closing:
+                # Read the data
+                data = await self.client.read_gatt_char(self.rx_uuid)
+                if len(data) == 0:
+                    continue
+                logging.info(f"Received {len(data)} bytes.")
+                # Append the data to the buffer
+                self._buffer.extend(data)
+                self._buffer_has_data = True
+        except asyncio.CancelledError:
+            logging.warning("Reader cancelled.")
+        except Exception as e:
+            logging.exception(e)
+            logging.error(f"Unexpected error: {e}\n{traceback.format_exc()}")
+            raise e
+        finally:
+            logging.warning("Reader exiting.")
 
     async def _writer(self):
         print("Writer started.")
@@ -75,15 +84,13 @@ class BleakSerial:
                 logging.info(f"Sent {len(data)} bytes.")
                 print(f"Sent {len(data)} bytes.")
         except asyncio.CancelledError:
-            logging.info("Writer cancelled.")
-            print("Writer cancelled.")
+            logging.warning("Writer cancelled.")
         except Exception as e:
             logging.exception(e)
             logging.error(f"Unexpected error: {e}\n{traceback.format_exc()}")
             raise e
         finally:
             logging.warning("Writer exiting.")
-            print("Writer exiting.")
 
     async def read_until(self, timeout=5) -> bytes:
         start_time = asyncio.get_running_loop().time()
@@ -100,14 +107,14 @@ class BleakSerial:
 
     async def write(self, data: bytes):
         # Add the data to the write buffer
-        # if self._write_buffer.full():
-        #     logging.warning("Write buffer is full.")
-        # else:
-        #     logging.info(f"Adding {len(data)} bytes to the write buffer.")
-        #     await self._write_buffer.put(data)
-        logging.info(f"Sending {len(data)} bytes.")
-        await self.client.write_gatt_char(self.tx_uuid, data, response=True)
-        logging.info(f"Sent {len(data)} bytes.")
+        if self._write_buffer.full():
+            logging.warning("Write buffer is full.")
+        else:
+            logging.info(f"Adding {len(data)} bytes to the write buffer.")
+            await self._write_buffer.put(data)
+        # logging.info(f"Sending {len(data)} bytes.")
+        # await self.client.write_gatt_char(self.tx_uuid, data, response=True)
+        # logging.info(f"Sent {len(data)} bytes.")
 
     async def request(self, req: bytes) -> bytes:
         logging.info(f"Queueing request: {req}")
