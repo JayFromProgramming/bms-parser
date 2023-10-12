@@ -155,15 +155,15 @@ class Serial:
         devices = await BleakScanner.discover(timeout=5)
         print("Discovered devices:")
         for d in devices:
-            print(d)
+            print(f"\t{d.address} ({d.name})")
         if self.mac_address is None:
             return
         # Check if the target device is in the list of discovered devices
         target = next((d for d in devices if d.address == self.mac_address), None)
-        logging.warning(f"Unable to find device {self.mac_address}, attempting connection anyway.")
-        # if target is None:
-        #     raise Exception(f"Device {self.mac_address} not found.")
-        self.client = BleakClient(self.mac_address)
+        # logging.warning(f"Unable to find device {self.mac_address}, attempting connection anyway.")
+        if target is None:
+            raise Exception(f"Device {self.mac_address} not found.")
+        self.client = BleakClient(target)
         try:
             await self.client.connect()
         except BleakDBusError as e:
