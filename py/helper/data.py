@@ -167,7 +167,7 @@ class Serial:
             await self.client.connect()
         except BleakDBusError as e:
             logging.error(f"Error while connecting to device: {e}")
-            raise e
+            return
         print("Connected to target device.")
         # Print all services
         svcs = await self.client.get_services()

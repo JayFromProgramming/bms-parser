@@ -145,25 +145,27 @@ def run():
     else:
         serial = Serial(None, use_mock=True, mock_fail_rate=0.05)
 
-    window = Window()
+    serial.get_cells()
 
-    with Live(window.layout, refresh_per_second=10):
-        while True:
-            try:
-                table_info, balance_info, fet_info, prot_info = serial.get_info()
-                cell_data = serial.get_cells()
-            except OSError as ose:
-                logging.error('Error while reading data')
-                logging.exception(ose)
-                sys.exit(1)
-            except Exception as e:
-                logging.exception(e)
-                logging.error(f"Unexpected error: {e}\n{traceback.format_exc()}")
-                sys.exit(-1)
+    # window = Window()
 
-            window.update_info(table_info, fet_info, prot_info)
-            window.update_cells(cell_data, balance_info)
-            time.sleep(REFRESH_INTERVAL)
+    # with Live(window.layout, refresh_per_second=10):
+    #     while True:
+    #         try:
+    #             table_info, balance_info, fet_info, prot_info = serial.get_info()
+    #             cell_data = serial.get_cells()
+    #         except OSError as ose:
+    #             logging.error('Error while reading data')
+    #             logging.exception(ose)
+    #             sys.exit(1)
+    #         except Exception as e:
+    #             logging.exception(e)
+    #             logging.error(f"Unexpected error: {e}\n{traceback.format_exc()}")
+    #             sys.exit(-1)
+    #
+    #         window.update_info(table_info, fet_info, prot_info)
+    #         window.update_cells(cell_data, balance_info)
+    #         time.sleep(REFRESH_INTERVAL)
 
 if __name__ == '__main__':
     run()
