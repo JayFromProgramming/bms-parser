@@ -78,7 +78,7 @@ class BleakSerial:
                 data = message
                 print(f"Sending {len(data)} bytes.")
                 logging.info(f"Sending {len(data)} bytes.")
-
+                await self.client.write_gatt_char(self.tx_uuid, data, response=True)
                 logging.info(f"Sent {len(data)} bytes.")
                 print(f"Sent {len(data)} bytes.")
         except asyncio.CancelledError:
@@ -131,14 +131,16 @@ class BleakSerial:
             logging.info(f"Adding {len(data)} bytes to the write buffer.")
             self._write_buffer.put_nowait(data)
 
+    def read(self):
+        return asyncio.run_coroutine_threadsafe(self.read_until(), asyncio.get_event_loop()).result()
+
     # Provide a non-async interface for requesting
     def request_sync(self, req: bytes) -> bytes:
         self.write_nowait(req)
         # Check if the write task is still running
         if self._writer_task.done():
             raise Exception("Writer task is not running.")
-        return b''
-
+        return self.read()
 
 class Serial:
 
@@ -151,6 +153,7 @@ class Serial:
         if self.client is None:
             return
         self.serial_conn._writer_task = event_loop.create_task(self.serial_conn._writer())
+        self.serial_conn._reader_task = event_loop.create_task(self.serial_conn._reader())
         self.request_info()
 
     async def connect(self):
@@ -167,7 +170,7 @@ class Serial:
             raise Exception(f"Device {self.mac_address} not found.")
         self.client = BleakClient(target)
         attempts_left = 5
-        while not self.client.is_connected and attempts_left > 0:
+        while not self.client.is_connected and attempts_left >= 0:
             try:
                 await self.client.connect()
             except BleakDBusError as e:
