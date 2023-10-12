@@ -147,6 +147,7 @@ class Serial:
         self.client = None
         self.serial_conn = None
         asyncio.run(self.connect())
+        self.serial_conn._writer_task = asyncio.create_task(self.serial_conn._writer())
         self.request_info()
 
     async def connect(self):
@@ -184,8 +185,6 @@ class Serial:
         self.serial_conn = BleakSerial(self.client, rx.lower(), tx.lower())
         await self.client.start_notify(rx.lower(), self.serial_conn._rx_callback)
         logging.info("Started notify.")
-        self.serial_conn._writer_task = asyncio.create_task(self.serial_conn._writer())
-        logging.info("Spooled tasks.")
 
     def _request(self, req: bytes):
         if self.client is None:
