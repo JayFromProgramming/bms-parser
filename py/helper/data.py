@@ -37,8 +37,7 @@ class BleakSerial:
         self._is_closing = False  # type: bool # Used to indicate that the connection is closing
 
     async def spool_tasks(self):
-        self._writer_task = asyncio.run_coroutine_threadsafe(self._writer(), asyncio.get_running_loop())
-        self._reader_task = asyncio.run_coroutine_threadsafe(self._reader(), asyncio.get_running_loop())
+        self._writer_task = asyncio.create_task(self._writer(), name="writer")
 
     def _rx_callback(self, sender, data):
         # Continuously append the data to the buffer
