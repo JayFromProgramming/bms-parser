@@ -160,8 +160,9 @@ class Serial:
             return
         # Check if the target device is in the list of discovered devices
         target = next((d for d in devices if d.address == self.mac_address), None)
-        if target is None:
-            raise Exception(f"Device {self.mac_address} not found.")
+        logging.warning(f"Unable to find device {self.mac_address}, attempting connection anyway.")
+        # if target is None:
+        #     raise Exception(f"Device {self.mac_address} not found.")
         self.client = BleakClient(target)
         try:
             await self.client.connect()
