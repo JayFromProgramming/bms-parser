@@ -1,3 +1,5 @@
+import traceback
+
 import serial
 from py.protocol.parser import BmsPacket
 
@@ -57,21 +59,28 @@ class BleakSerial:
     async def _writer(self):
         print("Writer started.")
         logging.info("Writer started.")
-        while not self._is_closing:
-            await asyncio.sleep(0.3)
-            # Check if there is data to send
-            message = await self._write_buffer.get()
-            if len(message) == 0:
-                logging.warning("Writer received empty message.")
-                continue
-            # Send the data
-            data = message
-            print(f"Sending {len(data)} bytes.")
-            logging.info(f"Sending {len(data)} bytes.")
+        try:
+            while not self._is_closing:
+                await asyncio.sleep(0.3)
+                # Check if there is data to send
+                message = await self._write_buffer.get()
+                if len(message) == 0:
+                    logging.warning("Writer received empty message.")
+                    continue
+                # Send the data
+                data = message
+                print(f"Sending {len(data)} bytes.")
+                logging.info(f"Sending {len(data)} bytes.")
 
-            logging.info(f"Sent {len(data)} bytes.")
-            print(f"Sent {len(data)} bytes.")
-        logging.info("Writer stopped.")
+                logging.info(f"Sent {len(data)} bytes.")
+                print(f"Sent {len(data)} bytes.")
+        except asyncio.CancelledError:
+            logging.info("Writer cancelled.")
+            print("Writer cancelled.")
+        except Exception as e:
+            logging.exception(e)
+            logging.error(f"Unexpected error: {e}\n{traceback.format_exc()}")
+            raise e
 
     async def read_until(self, timeout=5) -> bytes:
         start_time = asyncio.get_running_loop().time()
